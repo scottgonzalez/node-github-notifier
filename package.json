@@ -1,0 +1,20 @@
+{
+  "author": "Scott González <scott.gonzalez@gmail.com> (http://scottgonzalez.com)",
+  "name": "git-notifier",
+  "description": "Listen for GitHub updates using an EventEmitter.",
+  "version": "0.0.0",
+  "homepage": "https://github.com/scottgonzalez/node-git-notifier",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/scottgonzalez/node-git-notifier.git"
+  },
+  "main": "notifier.js",
+  "engines": {
+    "node": "*"
+  },
+  "dependencies": {
+    "eventemitter2": "0.4.9"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {}
+}
