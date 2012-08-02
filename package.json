@@ -13,7 +13,9 @@
     "node": "*"
   },
   "dependencies": {
-    "eventemitter2": "0.4.9"
+    "eventemitter2": "0.4.9",
+    "optimist": "0.3.4",
+    "logger": "git://github.com/scottgonzalez/node-logger.git"
   },
   "devDependencies": {},
   "optionalDependencies": {}
