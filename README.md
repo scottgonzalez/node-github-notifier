@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/scottgonzalez/node-git-notifier.png)](http://travis-ci.org/scottgonzalez/node-git-notifier)
 # node-git-notifier
 
 An EventEmitter built on top of GitHub post-receive hooks.
