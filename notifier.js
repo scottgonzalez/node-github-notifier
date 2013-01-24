@@ -24,10 +24,14 @@ function Notifier() {
 			}
 
 			// Accept the request and close the connection
-			response.writeHead( 202 );
+			if( notifier.process( data ) ) {
+				// Payload parsing successful
+				response.writeHead( 202 );
+			} else {
+				// Unrecognized payload
+				response.writeHead( 400 );
+			}
 			response.end();
-
-			notifier.process( data );
 		});
 	});
 
@@ -42,27 +46,91 @@ Notifier.prototype.listen = function() {
 	this.server.listen.apply( this.server, arguments );
 };
 
-Notifier.prototype.process = function( raw ) {
-	var refParts = raw.ref.split( "/" ),
-		type = refParts[ 1 ],
-		owner = raw.repository.owner.name,
-		repo = raw.repository.name,
-		data = {
-			commit: raw.after,
-			owner: owner,
-			repo: repo,
-			raw: raw
-		},
-		eventName = owner + "/" + repo + "/" + raw.ref.substr( 5 );
+Notifier.services = [
+	/* github */
+	function ( raw ) {
+		// console.log( raw );
+		// return true;
+		if ( "undefined" === typeof raw.ref )
+		{
+			return false;
+		}
 
-	if ( type === "heads" ) {
-		// Handle namespaced branches
-		data.branch = refParts.slice( 2 ).join( "/" );
-	} else if ( type === "tags" ) {
-		data.tag = refParts[ 2 ];
+		var refParts = raw.ref.split( "/" ),
+			type = refParts[ 1 ],
+			owner = raw.repository.owner.name,
+			repo = raw.repository.name,
+			data = {
+				commit: raw.after,
+				owner: owner,
+				repo: repo,
+				raw: raw
+			},
+			eventName = owner + "/" + repo + "/" + raw.ref.substr( 5 );
+
+		if ( type === "heads" ) {
+			// Handle namespaced branches
+			data.branch = refParts.slice( 2 ).join( "/" );
+		} else if ( type === "tags" ) {
+			data.tag = refParts[ 2 ];
+		}
+
+		this.emit( eventName, data );
+		return true;
+	},
+	/* bitbucket */
+	function ( raw ) {
+		if ( raw.canon_url !== 'https://bitbucket.org' || 'undefined' === raw.repository )
+		{
+			return false;
+		}
+
+		var repoParts = raw.repository.absolute_url.split('/'),
+			owner = repoParts[ 1 ],
+			repo = repoParts[ 2 ],
+			data = {
+				commit: null,
+				owner: owner,
+				repo: repo,
+				raw: raw
+			},
+			nodes = []
+			commit = null;
+
+		for( var i = 0; i < raw.commits.length; i++ ) {
+			commit = raw.commits[i];
+
+			if ( ( commit.branches instanceof Array && commit.brancheslength )
+				|| null != commit.branch) {
+
+				if( commit.branch != null)
+				{
+					data.branch = commit.branch
+				}
+
+				data.commit = commit.node;
+				eventName = owner + "/" + repo + "/" + commit.node.substr( 5 );
+				this.emit( eventName, data );
+
+			}
+		}
+
+		return true;
+	}
+]
+
+Notifier.prototype.process = function( raw ) {
+	var i = Notifier.services.length - 1;
+
+	for ( ; i >=0; i-- )
+	{
+		if ( Notifier.services[i].call( this, raw ) )
+		{
+			return true;
+		}
 	}
 
-	this.emit( eventName, data );
+	return false;
 };
 
 exports.Notifier = Notifier;
