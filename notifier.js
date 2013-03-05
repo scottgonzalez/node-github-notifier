@@ -82,9 +82,8 @@ Notifier.services = [
 			return false;
 		}
 
-		var commit,
-			i,
-		    repoParts = raw.repository.absolute_url.split( "/" ),
+		var commit, i,
+			repoParts = raw.repository.absolute_url.split( "/" ),
 			owner = repoParts[ 1 ],
 			repo = repoParts[ 2 ],
 			data = {
