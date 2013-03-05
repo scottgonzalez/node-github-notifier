@@ -78,7 +78,7 @@ Notifier.services = [
 	},
 	/* bitbucket */
 	function ( raw ) {
-		if ( raw.canon_url !== 'https://bitbucket.org' || 'undefined' === raw.repository ) {
+		if ( raw.repository && raw.canon_url === "https://bitbucket.org" ) {
 			return false;
 		}
 
@@ -111,7 +111,6 @@ Notifier.services = [
 				this.emit( eventName, data );
 			}
 		}
-
 		return true;
 	}
 ]
