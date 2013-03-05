@@ -24,7 +24,7 @@ function Notifier() {
 			}
 
 			// Accept the request and close the connection
-			if( notifier.process( data ) ) {
+			if ( notifier.process( data ) ) {
 				// Payload parsing successful
 				response.writeHead( 202 );
 			} else {
@@ -49,9 +49,7 @@ Notifier.prototype.listen = function() {
 Notifier.services = [
 	/* github */
 	function ( raw ) {
-		// console.log( raw );
-		// return true;
-		if ( "undefined" === typeof raw.ref )
+		if ( raw.ref )
 		{
 			return false;
 		}
@@ -80,12 +78,13 @@ Notifier.services = [
 	},
 	/* bitbucket */
 	function ( raw ) {
-		if ( raw.canon_url !== 'https://bitbucket.org' || 'undefined' === raw.repository )
-		{
+		if ( raw.canon_url !== 'https://bitbucket.org' || 'undefined' === raw.repository ) {
 			return false;
 		}
 
-		var repoParts = raw.repository.absolute_url.split('/'),
+		var commit,
+			i,
+		    repoParts = raw.repository.absolute_url.split( "/" ),
 			owner = repoParts[ 1 ],
 			repo = repoParts[ 2 ],
 			data = {
@@ -94,16 +93,15 @@ Notifier.services = [
 				repo: repo,
 				raw: raw
 			},
-			nodes = []
-			commit = null;
+			nodes = [];
 
-		for( var i = 0; i < raw.commits.length; i++ ) {
-			commit = raw.commits[i];
+		for( i = 0; i < raw.commits.length; i++ ) {
+			commit = raw.commits[ i ];
 
-			if ( ( commit.branches instanceof Array && commit.brancheslength )
+			if ( ( commit.branches && commit.branches.length )
 				|| null != commit.branch) {
 
-				if( commit.branch != null)
+				if ( commit.branch != null)
 				{
 					data.branch = commit.branch
 				}
@@ -111,7 +109,6 @@ Notifier.services = [
 				data.commit = commit.node;
 				eventName = owner + "/" + repo + "/" + commit.node.substr( 5 );
 				this.emit( eventName, data );
-
 			}
 		}
 
@@ -122,10 +119,8 @@ Notifier.services = [
 Notifier.prototype.process = function( raw ) {
 	var i = Notifier.services.length - 1;
 
-	for ( ; i >=0; i-- )
-	{
-		if ( Notifier.services[i].call( this, raw ) )
-		{
+	for ( ; i >= 0; i-- ) {
+		if ( Notifier.services[ i ].call( this, raw ) ) {
 			return true;
 		}
 	}
