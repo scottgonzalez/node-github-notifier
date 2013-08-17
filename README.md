@@ -2,6 +2,8 @@
 
 An EventEmitter built on top of GitHub post-receive hooks.
 
+Support this project by [donating on Gittip](https://www.gittip.com/scottgonzalez/).
+
 ## Installation
 
 ```sh
@@ -108,5 +110,8 @@ server.on( "**", function( data ) {
 ## License
 
 Copyright 2012 Scott González
+Released under the terms of the MIT license.
 
-node-git-notifier is released under the MIT license.
+---
+
+Support this project by [donating on Gittip](https://www.gittip.com/scottgonzalez/).
