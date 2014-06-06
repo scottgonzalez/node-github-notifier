@@ -13,8 +13,11 @@ function Notifier() {
 		});
 		request.on( "end", function() {
 			try {
-				data = querystring.parse( data );
-				data = JSON.parse( data.payload );
+				if (request.headers['content-type'] === 'application/x-www-form-urlencoded') {
+					data = querystring.parse( data );
+					data = data.payload;
+				}
+				data = JSON.parse( data );
 			} catch( error ) {
 				// Invalid data, stop processing
 				response.writeHead( 400 );
