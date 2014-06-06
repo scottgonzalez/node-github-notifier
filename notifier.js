@@ -27,7 +27,11 @@ function Notifier() {
 			response.writeHead( 202 );
 			response.end();
 
-			notifier.process( data );
+			try {
+				notifier.process( data );
+			} catch ( error ) {
+				notifier.emit( "error", error );
+			}
 		});
 	});
 
@@ -40,9 +44,13 @@ util.inherits( Notifier, EventEmitter2 );
 
 Notifier.prototype.listen = function() {
 	this.server.listen.apply( this.server, arguments );
+	return this;
 };
 
 Notifier.prototype.process = function( raw ) {
+	if (!raw || raw.zen) {
+		return;
+	}
 	var refParts = raw.ref.split( "/" ),
 		type = refParts[ 1 ],
 		owner = raw.repository.owner.name,
