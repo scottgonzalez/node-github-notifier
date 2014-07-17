@@ -46,6 +46,11 @@ Notifier.prototype.listen = function() {
 };
 
 Notifier.prototype.process = function( raw ) {
+	// { "zen": "Design for failure.", "hook_id": 123 }
+	if ( raw.zen ) {
+		return;
+	}
+
 	var refParts = raw.ref.split( "/" ),
 		type = refParts[ 1 ],
 		owner = raw.repository.owner.name,
