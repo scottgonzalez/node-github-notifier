@@ -109,8 +109,7 @@ server.on( "**", function( data ) {
 
 ## License
 
-Copyright 2012 Scott González
-Released under the terms of the MIT license.
+Copyright Scott González. Released under the terms of the MIT license.
 
 ---
 
