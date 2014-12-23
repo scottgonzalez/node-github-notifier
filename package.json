@@ -15,6 +15,6 @@
     }
   ],
   "dependencies": {
-    "eventemitter2": "0.4.9"
+    "eventemitter2": "0.4.14"
   }
 }

@@ -1,67 +1,111 @@
-var http = require( "http" ),
-	querystring = require( "querystring" ),
-	util = require( "util" ),
-	EventEmitter2 = require( "eventemitter2" ).EventEmitter2;
+var querystring = require( "querystring" );
+var util = require( "util" );
+var EventEmitter2 = require( "eventemitter2" ).EventEmitter2;
+
+function xHeader( str ) {
+	str = str.substring( 2 );
+
+	return str.replace( /-([a-z])/gi, function( all, letter ) {
+		return letter.toUpperCase();
+	});
+}
 
 function Notifier() {
-	var notifier = this;
-	this.server = http.createServer(function( request, response ) {
-		var data = "";
-		request.setEncoding( "utf8" );
-		request.on( "data", function( chunk ) {
-			data += chunk;
-		});
-		request.on( "end", function() {
-			try {
-				if ( request.headers[ "content-type" ] === "application/x-www-form-urlencoded" ) {
-					data = querystring.parse( data );
-					data = data.payload;
-				}
-				data = JSON.parse( data );
-			} catch( error ) {
-				// Invalid data, stop processing
-				response.writeHead( 400 );
-				response.end();
-				notifier.emit( "error", error );
-				return;
-			}
-
-			// Accept the request and close the connection
-			response.writeHead( 202 );
-			response.end();
-
-			notifier.process( data );
-		});
-	});
-
 	EventEmitter2.call( this, {
 		wildcard: true,
 		delimiter: "/"
 	});
+
+	this.handler = this.handler.bind( this );
 }
 util.inherits( Notifier, EventEmitter2 );
 
-Notifier.prototype.listen = function() {
-	this.server.listen.apply( this.server, arguments );
+Notifier.prototype.handler = function( request, response ) {
+	var notifier = this;
+	var data = "";
+	var headers = {};
+
+	request.setEncoding( "utf8" );
+	request.on( "data", function( chunk ) {
+		data += chunk;
+	});
+
+	request.on( "end", function() {
+		try {
+			if ( request.headers[ "content-type" ] === "application/x-www-form-urlencoded" ) {
+				data = querystring.parse( data );
+				data = data.payload;
+			}
+			data = JSON.parse( data );
+		} catch( error ) {
+			// Invalid data, stop processing
+			response.writeHead( 400 );
+			response.end();
+			notifier.emit( "error", error );
+			return;
+		}
+
+		// Accept the request and close the connection
+		response.writeHead( 202 );
+		response.end();
+
+		// Parse the headers
+		Object.keys( request.headers ).forEach(function( header ) {
+			if ( /^x-/.test( header ) ) {
+				headers[ xHeader( header ) ] = request.headers[ header ];
+			}
+		});
+
+		notifier.process({
+			data: data,
+			headers: headers
+		});
+	});
 };
 
-Notifier.prototype.process = function( raw ) {
-	// { "zen": "Design for failure.", "hook_id": 123 }
-	if ( raw.zen ) {
+Notifier.prototype.process = function( payload ) {
+	var eventType = payload.headers.githubEvent;
+
+	// Ignore ping events that are sent when a new webhook is created
+	if ( eventType === "ping" ) {
 		return;
 	}
 
-	var refParts = raw.ref.split( "/" ),
-		type = refParts[ 1 ],
-		owner = raw.repository.owner.name,
-		repo = raw.repository.name,
-		data = {
-			commit: raw.after,
-			owner: owner,
-			repo: repo,
-			raw: raw
-		},
-		eventName = owner + "/" + repo + "/" + raw.ref.substr( 5 );
+	// Handle event-specific processing
+	var processor = this.processors[ eventType ] || this.processors._default;
+	var eventInfo = processor( payload );
+	var event = eventInfo.data;
+	var prefix = eventInfo.prefix;
+
+	// Handle common properties
+	var repository = payload.data.repository;
+	event.type = eventType;
+	event.owner = repository.owner.login || repository.owner.name;
+	event.repo = repository.name;
+	event.payload = payload.data;
+
+	// Emit event rooted on the owner/repo
+	var eventName = event.owner + "/" + event.repo + "/" + event.type;
+	if ( eventInfo.postfix ) {
+		eventName += "/" + eventInfo.postfix;
+	}
+	this.emit( eventName, event );
+};
+
+Notifier.prototype.processors = {};
+
+Notifier.prototype.processors._default = function( payload ) {
+	return {
+		data: {}
+	};
+};
+
+Notifier.prototype.processors.push = function( payload ) {
+	var raw = payload.data;
+	var refParts = raw.ref.split( "/" );
+	var type = refParts[ 1 ];
+
+	var data = { commit: raw.after };
 
 	if ( type === "heads" ) {
 		// Handle namespaced branches
@@ -70,10 +114,10 @@ Notifier.prototype.process = function( raw ) {
 		data.tag = refParts[ 2 ];
 	}
 
-	this.emit( eventName, data );
+	return {
+		postfix: raw.ref.substr( 5 ),
+		data: data
+	};
 };
 
 exports.Notifier = Notifier;
-exports.createServer = function() {
-	return new Notifier();
-};

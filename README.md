@@ -1,6 +1,6 @@
 # node-git-notifier
 
-An EventEmitter built on top of GitHub post-receive hooks.
+An EventEmitter built on top of [GitHub Webhooks](https://developer.github.com/webhooks/).
 
 Support this project by [donating on Gratipay](https://gratipay.com/scottgonzalez/).
 
@@ -13,99 +13,59 @@ npm install git-notifier
 ## Usage
 
 ```js
-var server = require( "git-notifier" ).createServer();
+var http = require( "http" );
+var Notifier = require( "git-notifier" ).Notifer;
+var notifier = new Notifier();
+server.on( "request", notifier.handler );
 server.listen( 8000 );
 
-server.on( "scottgonzalez/node-git-notifier/heads/**", function( data ) {
+notifier.on( "scottgonzalez/node-git-notifier/push/heads/**", function( data ) {
 	console.log( "New commit: " + data.commit );
 });
 ```
 
 ## API
 
-All events follow a simple format: `{username}/{repo}/{refspec}`
+All events follow a simple format: `{username}/{repo}/{eventname}`
 
-The server is an EventEmitter2 instance and therefore supports namespacing,
-which makes the notifier quite powerful and flexible.
+The notifier is an EventEmitter2 instance and therefore supports namespacing, which makes the notifier quite powerful and flexible. Notifiers have a `handler` method which is designed to be used as an HTTP request listener. In the basic usage above, the notifier will listen to all requests, however this can be controlled however you want since it is just a request listener. This also makes it very simple to integrate into an existing server.
 
-### Event Data
+The notifier supports both `application/x-www-form-urlencoded` and `application/json` payload formats and will detect the content type automatically.
 
-All events receive a single data parameter with the following properties:
+### Events
 
-* `commit`: The SHA of the last commit.
+All events receive a single data parameter with some common data and event-specific data.
+
+Some events will also have additional levels of data in the event name in order to provide simpler customizations via wildcards. This is currently limited to `push` events, but may be extended by adding [additional processors](#processors) to the notifier.
+
+#### Common Event Data
+
+* `type`: The type of event. See [Webhook Events](https://developer.github.com/webhooks/#events) for a full list of possible events.
 * `owner`: The owner of the repo.
 * `repo`: The name of the repo.
-* `raw`: The raw post-receive data.
+* `payload`: The raw GitHub payload data. See [Event Types & Payloads](https://developer.github.com/v3/activity/events/types/) for detailed information on the payloads for each event type.
 
-### Listen for commits on a branch
+#### Push
 
-*Note: Commits to a branch contain a `branch` property in the data.*
+Push events add the refspec to the event name. For example, a push to the master branch of `scottgonzalez/node-git-notifier` will result in a `scottgonzalez/node-git-notifier/push/heads/master` event and a push that creates a `1.2.3` tag will result in a `scottgonzalez/node-git-notifier/push/tags/1.2.3` event.
 
-Listen for commits on the master branch:
+Additional data:
 
-```js
-server.on( "scottgonzalez/node-git-notifier/heads/master", function( data ) {
-	console.log( "New commit on master: " + data.commit );
-});
-```
+* `commit`: The HEAD of the branch after the push. This is the same as `payload.after`.
+* `branch`: The name of the branch, if a branch was pushed.
+* `tag`: The name of the tag, if a tag was pushed.
 
-Listen for commits on a namespaced branch:
+### Processors
 
-```js
-server.on( "scottgonzalez/node-git-notifier/heads/some/deep/branch", function( data ) {
-	console.log( "New commit on some/deep/branch: " + data.commit );
-});
-```
+In order to provide event-specific customizations of data and event names, additional processors can be added to `Notifier.prototype.processors` (or on the `processors` property of a notifier instance). `processors` is just a hash of methods where the key is the event name and the value is a function with the following signature:
 
-Listen for commits on any branch in a specific namespace:
-
-```js
-server.on( "scottgonzalez/node-git-notifier/heads/ns/**", function( data ) {
-	console.log( "New commit on " + data.branch + ": " + data.commit );
-});
-```
-
-Listen for commits on any branch:
-
-```js
-server.on( "scottgonzalez/node-git-notifier/heads/**", function( data ) {
-	console.log( "New commit on " + data.branch + ": " + data.commit );
-});
-```
-
-### Listen for new tags
-
-*Note: Commits to a tag contain a `tag` property in the data.*
-
-```js
-server.on( "scottgonzalez/node-git-notifier/tags/*", function( data ) {
-	console.log( "Created new tag: " + data.tag );
-});
-```
-
-### Listen to any commit or tag
-
-```js
-server.on( "scottgonzalez/node-git-notifier/**", function( data ) {
-	console.log( "More activity on node-git-notifier..." );
-});
-```
-
-### Listen to any commit or tag on any repo for a specific user
-
-```js
-server.on( "scottgonzalez/**", function( data ) {
-	console.log( "More activity on " + data.repo + "..." );
-});
-```
-
-### Listen to any commit or tag on any repo for any user
-
-```js
-server.on( "**", function( data ) {
-	console.log( "More activity on " + data.owner + "/" + data.repo + "..." );
-});
-```
+`function( payload )`
+* `payload` (Object): The payload, containing the headers and data from the webhook.
+  * `headers` (Object): A hash of the headers sent by GitHub.
+  * `data` (Object): The actual payload sent by GitHub.
+* return value: Object
+  * `data` (Object): Additional data to include with the event.
+  * `postfix` (String; optional): Additional levels of data to append to the event name.
 
 ## License
 
