@@ -100,6 +100,21 @@ Notifier.prototype.processors._default = function( payload ) {
 	};
 };
 
+Notifier.prototype.processors.pull_request = function( payload ) {
+	var pullRequest = payload.data.pull_request;
+	var base = pullRequest.base.sha;
+	var head = pullRequest.head.sha;
+
+	return {
+		data: {
+			pr: payload.data.number,
+			base: base,
+			head: head,
+			range: base + ".." + head
+		}
+	};
+};
+
 Notifier.prototype.processors.push = function( payload ) {
 	var raw = payload.data;
 	var refParts = raw.ref.split( "/" );

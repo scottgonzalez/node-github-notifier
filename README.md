@@ -45,7 +45,16 @@ Some events will also have additional levels of data in the event name in order 
 * `repo`: The name of the repo.
 * `payload`: The raw GitHub payload data. See [Event Types & Payloads](https://developer.github.com/v3/activity/events/types/) for detailed information on the payloads for each event type.
 
-#### Push
+#### pull_request
+
+Additional data:
+
+* `pr`: The pull request number. This is the same as `payload.number`.
+* `base`: The SHA of the base. This is the same as `payload.pull_request.base.sha`.
+* `head`: The SHA of the head. This is the same as `payload.pull_request.head.sha`.
+* `range`: The commit range for the pull request.
+
+#### push
 
 Push events add the refspec to the event name. For example, a push to the master branch of `scottgonzalez/node-git-notifier` will result in a `scottgonzalez/node-git-notifier/push/heads/master` event and a push that creates a `1.2.3` tag will result in a `scottgonzalez/node-git-notifier/push/tags/1.2.3` event.
 
