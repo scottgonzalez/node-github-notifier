@@ -14,8 +14,9 @@ npm install git-notifier
 
 ```js
 var http = require( "http" );
-var Notifier = require( "git-notifier" ).Notifer;
+var Notifier = require( "git-notifier" ).Notifier;
 var notifier = new Notifier();
+var server = http.createServer();
 server.on( "request", notifier.handler );
 server.listen( 8000 );
 
