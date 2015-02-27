@@ -26,11 +26,40 @@ notifier.on( "scottgonzalez/node-git-notifier/push/heads/**", function( data ) {
 
 ## API
 
+### Overview
+
 All events follow a simple format: `{username}/{repo}/{eventname}`
 
 The notifier is an EventEmitter2 instance and therefore supports namespacing, which makes the notifier quite powerful and flexible. Notifiers have a `handler` method which is designed to be used as an HTTP request listener. In the basic usage above, the notifier will listen to all requests, however this can be controlled however you want since it is just a request listener. This also makes it very simple to integrate into an existing server.
 
 The notifier supports both `application/x-www-form-urlencoded` and `application/json` payload formats and will detect the content type automatically.
+
+### Notifier( options )
+
+Creates a new notifier instance.
+
+* `options` (Object): The options for configuring the notifier
+  * `secrets` (Object): Which secrets to use for signing webhooks
+
+#### Secrets
+
+GitHub supports the use of secrets to [secure your webhooks](https://developer.github.com/webhooks/securing/). When using secrets, the notifier can verify that the webhook actually came from GitHub by validating the signature sent with the payload.
+
+Secrets can be specified at the global, owner/organization, or repository level. The `secrets` option takes an object with the owner or repository as the keys and the secret as the value.
+
+```js
+var notifier = new Notifier({
+	secrets: {
+		"*": "applies to every webhook",
+		"scottgonzalez/*": "applies to all webhooks with an owner of scottgonzalez",
+		"scottgonzalez/node-git-notifier": "applies only to webhooks for scottgonzalez/node-git-notifier"
+	}
+});
+```
+
+More specific rules override more geric rules, so the above is a valid configuration. In the case that most, but not all, repositories from a single owner use the same secret, specifying the secret at the owner level, then overriding at the repo level may significantly simplify the configuration. In the case that you have such a setup, but have a repo that doesn't use a secret, you can set the secret for that repo to `null` to disable the check.
+
+*NOTE: If you have GitHub configured to use a secret, but you don't have the notifier configured to use a secret, all requests will be allowed through. The notifier will only validate requests if a secret has been specified in its configuration options.*
 
 ### Events
 
