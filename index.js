@@ -42,7 +42,10 @@ Notifier.prototype.handler = function( request, response ) {
 			}
 			data = JSON.parse( data );
 		} catch( error ) {
+
 			// Invalid data, stop processing
+			error = new Error( "Invalid data: " + error.message );
+			error.payload = data;
 			response.writeHead( 400 );
 			response.end();
 			notifier.emit( "error", error );

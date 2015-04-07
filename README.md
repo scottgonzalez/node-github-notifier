@@ -75,6 +75,12 @@ notifier.on( "error", function( error ) {
 })
 ```
 
+##### `Invalid data parsing payload`
+
+Additional error attribute:
+
+* `payload` (Object): The raw payload containing the data from the webhook.
+
 ### Processors
 
 In order to provide event-specific customizations of data and event names, additional processors can be added to `Notifier.prototype.processors` (or on the `processors` property of a notifier instance). `processors` is just a hash of methods where the key is the event name and the value is a function with the following signature:
