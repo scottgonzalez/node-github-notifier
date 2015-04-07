@@ -38,19 +38,22 @@ Notifier.prototype.handler = function( request, response ) {
 
 	request.on( "end", function() {
 		var payload;
+		var rawPayload = {
+			data: data,
+			headers: request.headers
+		};
 
 		// Parse the payload into structured data
 		try {
-			payload = notifier.parseRequest({
-				data: data,
-				headers: request.headers
-			});
+			payload = notifier.parseRequest( rawPayload );
 		} catch( error ) {
 
 			// Invalid data, stop processing
+			var newError = new Error( "Invalid data parsing payload. " + error.message );
+			newError.payload = rawPayload;
 			response.writeHead( 400 );
 			response.end();
-			notifier.emit( "error", error );
+			notifier.emit( "error", newError );
 			return;
 		}
 
