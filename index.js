@@ -30,6 +30,10 @@ Notifier.prototype.handler = function( request, response ) {
 		data += chunk;
 	});
 
+	request.on( "error", function( error ) {
+		notifier.emit( "error", error );
+	});
+
 	request.on( "end", function() {
 		try {
 			if ( request.headers[ "content-type" ] === "application/x-www-form-urlencoded" ) {
