@@ -65,6 +65,22 @@ Additional data:
 * `branch`: The name of the branch, if a branch was pushed.
 * `tag`: The name of the tag, if a tag was pushed.
 
+#### Errors
+
+Emitted if there was an error handling the request or processing the payload data.
+
+```js
+notifier.on( "error", function( error ) {
+	console.error( error.message );
+})
+```
+
+##### `Invalid data parsing payload`
+
+Additional error attribute:
+
+* `payload` (Object): The raw payload containing the data from the webhook.
+
 ### Processors
 
 In order to provide event-specific customizations of data and event names, additional processors can be added to `Notifier.prototype.processors` (or on the `processors` property of a notifier instance). `processors` is just a hash of methods where the key is the event name and the value is a function with the following signature:
