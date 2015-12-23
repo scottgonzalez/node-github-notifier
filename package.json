@@ -2,7 +2,7 @@
   "author": "Scott González <scott.gonzalez@gmail.com> (http://scottgonzalez.com)",
   "name": "github-notifier",
   "description": "Listen for GitHub updates using an EventEmitter.",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "homepage": "https://github.com/scottgonzalez/node-git-notifier",
   "repository": {
     "type": "git",
