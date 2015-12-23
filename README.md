@@ -1,4 +1,4 @@
-# node-git-notifier
+# node-github-notifier
 
 An EventEmitter built on top of [GitHub Webhooks](https://developer.github.com/webhooks/).
 
@@ -7,20 +7,20 @@ Support this project by [donating on Gratipay](https://gratipay.com/scottgonzale
 ## Installation
 
 ```sh
-npm install git-notifier
+npm install github-notifier
 ```
 
 ## Usage
 
 ```js
 var http = require( "http" );
-var Notifier = require( "git-notifier" ).Notifier;
+var Notifier = require( "github-notifier" ).Notifier;
 var notifier = new Notifier();
 var server = http.createServer();
 server.on( "request", notifier.handler );
 server.listen( 8000 );
 
-notifier.on( "scottgonzalez/node-git-notifier/push/heads/**", function( data ) {
+notifier.on( "scottgonzalez/node-github-notifier/push/heads/**", function( data ) {
 	console.log( "New commit: " + data.commit );
 });
 ```
@@ -57,7 +57,7 @@ Additional data:
 
 #### push
 
-Push events add the refspec to the event name. For example, a push to the master branch of `scottgonzalez/node-git-notifier` will result in a `scottgonzalez/node-git-notifier/push/heads/master` event and a push that creates a `1.2.3` tag will result in a `scottgonzalez/node-git-notifier/push/tags/1.2.3` event.
+Push events add the refspec to the event name. For example, a push to the master branch of `scottgonzalez/node-github-notifier` will result in a `scottgonzalez/node-github-notifier/push/heads/master` event and a push that creates a `1.2.3` tag will result in a `scottgonzalez/node-github-notifier/push/tags/1.2.3` event.
 
 Additional data:
 
